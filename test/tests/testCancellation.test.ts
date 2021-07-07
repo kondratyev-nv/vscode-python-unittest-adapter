@@ -5,15 +5,18 @@ import * as os from 'os';
 
 import { PytestTestRunner } from '../../src/pytest/pytestTestRunner';
 import { UnittestTestRunner } from '../../src/unittest/unittestTestRunner';
+import { TestplanTestRunner } from '../../src/testplan/testplanTestRunner';
 import {
     createPytestConfiguration,
     createUnittestConfiguration,
+    createTestplanConfiguration,
     extractExpectedState,
     extractErroredTests,
     findTestSuiteByLabel,
     logger,
     sleep
 } from '../utils/helpers';
+import { isTestplanPrerequisiteMet } from './utilities';
 
 [
     {
@@ -27,9 +30,15 @@ import {
         runner: new PytestTestRunner('second-id', logger()),
         configuration: createPytestConfiguration('pytest_test_cancellation'),
         allowNoTestCompleted: os.platform() === 'win32',
+    },
+    {
+        label: 'testplan',
+        runner: new TestplanTestRunner('third-id', logger()),
+        configuration: createTestplanConfiguration('testplan_test_cancellation'),
+        allowNoTestCompleted: isTestplanPrerequisiteMet(),
     }
 ].forEach(({ label, runner, configuration, allowNoTestCompleted }) => {
-    suite(`Test cancellation with ${label}`, () => {
+    (allowNoTestCompleted ? suite : suite.skip)(`Test cancellation with ${label}`, () => {
 
         test('should run and cancel all tests', async () => {
             const mainSuite = await runner.load(configuration);
